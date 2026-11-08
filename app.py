@@ -107,8 +107,8 @@ class VideoDownloaderApp(ctk.CTk):
         super().__init__()
 
         self.title("Videomatik — Evrensel Video & Ses İndirici")
-        self.geometry("800x690")
-        self.minsize(720, 620)
+        self.geometry("800x730")
+        self.minsize(720, 660)
 
         icon_path = get_resource_path("assets/icon.ico")
         if icon_path.is_file():
@@ -118,6 +118,11 @@ class VideoDownloaderApp(ctk.CTk):
                 pass
 
         self.download_dir = str(Path.home() / "Downloads")
+        self.cookie_file_path: str = ""
+        default_cookie = Path(__file__).resolve().parent / "cookies.txt"
+        if default_cookie.is_file():
+            self.cookie_file_path = str(default_cookie)
+
         self.is_downloading = False
         self.cancel_requested = False
         self.current_thumbnail_image: ctk.CTkImage | None = None
@@ -302,9 +307,51 @@ class VideoDownloaderApp(ctk.CTk):
         )
         self.proxy_entry.grid(row=0, column=1, sticky="ew")
 
+        # Çerez / Oturum Ayarı (YouTube Bot Koruması ve Yaş Kısıtlamalı Videolar İçin)
+        cookie_row = ctk.CTkFrame(options_frame, fg_color="transparent")
+        cookie_row.grid(row=3, column=0, columnspan=2, padx=16, pady=(0, 8), sticky="ew")
+        cookie_row.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(
+            cookie_row,
+            text="Çerez / Oturum:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        ).grid(row=0, column=0, padx=(0, 8), sticky="w")
+
+        initial_cookie_mode = (
+            "cookies.txt Dosyası Kullan" if self.cookie_file_path else "Kullanma (Varsayılan)"
+        )
+        self.cookie_var = ctk.StringVar(value=initial_cookie_mode)
+        self.cookie_menu = ctk.CTkOptionMenu(
+            cookie_row,
+            values=[
+                "Kullanma (Varsayılan)",
+                "cookies.txt Dosyası Kullan",
+                "Firefox Oturumunu Kullan",
+                "Brave Oturumunu Kullan (Tarayıcı Kapalıyken)",
+                "Edge Oturumunu Kullan (Tarayıcı Kapalıyken)",
+                "Chrome Oturumunu Kullan (Tarayıcı Kapalıyken)",
+                "Opera Oturumunu Kullan (Tarayıcı Kapalıyken)",
+            ],
+            variable=self.cookie_var,
+            height=30,
+        )
+        self.cookie_menu.grid(row=0, column=1, padx=(0, 6), sticky="ew")
+
+        choose_cookie_btn = ctk.CTkButton(
+            cookie_row,
+            text="cookies.txt Seç...",
+            width=125,
+            height=30,
+            fg_color=("gray75", "gray25"),
+            hover_color=("gray65", "gray35"),
+            command=self.choose_cookie_file,
+        )
+        choose_cookie_btn.grid(row=0, column=2)
+
         # Kayıt Klasörü Satırı
         folder_row = ctk.CTkFrame(options_frame, fg_color="transparent")
-        folder_row.grid(row=3, column=0, columnspan=2, padx=16, pady=(0, 12), sticky="ew")
+        folder_row.grid(row=4, column=0, columnspan=2, padx=16, pady=(0, 12), sticky="ew")
         folder_row.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(
@@ -405,6 +452,16 @@ class VideoDownloaderApp(ctk.CTk):
             self.download_dir = selected
             self.folder_label.configure(text=self.download_dir)
 
+    def choose_cookie_file(self) -> None:
+        selected = filedialog.askopenfilename(
+            title="Netscape formatında cookies.txt dosyası seçin",
+            filetypes=[("Metin Dosyaları", "*.txt"), ("Tüm Dosyalar", "*.*")],
+        )
+        if selected:
+            self.cookie_file_path = selected
+            self.cookie_var.set("cookies.txt Dosyası Kullan")
+            self.status_label.configure(text=f"Çerez dosyası seçildi: {Path(selected).name}")
+
     def open_download_directory(self) -> None:
         if os.path.isdir(self.download_dir):
             os.startfile(self.download_dir)
@@ -454,8 +511,10 @@ class VideoDownloaderApp(ctk.CTk):
             messagebox.showerror("Hata", f"Kısayol oluşturulurken hata oluştu:\n{exc}")
 
     def _get_common_ydl_opts(self, url: str, proxy_str: str = "") -> dict[str, Any]:
-        """Standart tarayıcı başlıkları, yeniden deneme ve bağlantı ayarlarını döndürür."""
+        """Standart tarayıcı başlıkları, çerez (cookie), yeniden deneme ve bağlantı ayarlarını döndürür."""
         referer = extract_origin_referer(url)
+        is_youtube = any(d in url.lower() for d in ("youtube.com", "youtu.be"))
+
         opts: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
@@ -464,18 +523,37 @@ class VideoDownloaderApp(ctk.CTk):
             "fragment_retries": 5,
             "extractor_retries": 3,
             "socket_timeout": 30,
-            "http_headers": {
+            "js_runtimes": {"node": {}, "deno": {}},
+        }
+
+        if not is_youtube:
+            opts["http_headers"] = {
                 "User-Agent": DEFAULT_USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
                 "Referer": referer,
-            },
-        }
-        if ImpersonateTarget is not None:
-            try:
-                opts["impersonate"] = ImpersonateTarget("chrome")
-            except Exception:
-                pass
+            }
+            if ImpersonateTarget is not None:
+                try:
+                    opts["impersonate"] = ImpersonateTarget("chrome")
+                except Exception:
+                    pass
+
+        cookie_choice = self.cookie_var.get()
+        if cookie_choice == "cookies.txt Dosyası Kullan":
+            if self.cookie_file_path and os.path.isfile(self.cookie_file_path):
+                opts["cookiefile"] = self.cookie_file_path
+        elif "Firefox" in cookie_choice:
+            opts["cookiesfrombrowser"] = ("firefox",)
+        elif "Brave" in cookie_choice:
+            opts["cookiesfrombrowser"] = ("brave",)
+        elif "Edge" in cookie_choice:
+            opts["cookiesfrombrowser"] = ("edge",)
+        elif "Chrome" in cookie_choice:
+            opts["cookiesfrombrowser"] = ("chrome",)
+        elif "Opera" in cookie_choice:
+            opts["cookiesfrombrowser"] = ("opera",)
+
         if proxy_str:
             opts["proxy"] = proxy_str
         return opts
@@ -593,6 +671,15 @@ class VideoDownloaderApp(ctk.CTk):
                 "Hedef site bağlantıyı kapattı veya bu siteye erişim internet servis sağlayıcınız (İSS) "
                 "tarafından kısıtlanmış olabilir. Tarayıcıda VPN/Proxy ile giriyorsanız 'Proxy' alanını doldurmayı "
                 "veya sistem genelinde VPN açmayı deneyin."
+            )
+        elif "not a bot" in err_msg or "cookies" in err_msg.lower():
+            extra_hint = (
+                "İpucu (YouTube Bot Doğrulaması Hatası):\n"
+                "1) Bilgisayarınızda VPN açıksa kapatıp tekrar deneyin (YouTube, VPN sunucusu IP'lerinden gelen "
+                "oturumsuz istekleri bot olarak engeller).\n"
+                "2) VPN kapatmak istemiyorsanız veya video yaş kısıtlamalıysa, tarayıcınıza 'Get cookies.txt LOCALLY' "
+                "eklentisini kurup dışa aktardığınız dosyayı arayüzdeki 'cookies.txt Seç...' butonuyla tanıtın "
+                "veya 'Çerez / Oturum' menüsünden tarayıcınızı seçin."
             )
 
         messagebox.showerror(
