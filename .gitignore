@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Sanal Ortamlar (Virtual Environments)
+.venv/
+venv/
+env/
+ENV/
+
+# İndirilen medya dosyaları (proje içine indirilirse)
+*.mp4
+*.mp3
+*.m4a
+*.webm
+*.mkv
+*.part
+*.ytdl
+
+# IDE ve İşletim Sistemi
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
