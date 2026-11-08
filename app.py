@@ -4,6 +4,8 @@ import io
 import os
 import re
 import shutil
+import subprocess
+import sys
 import threading
 from pathlib import Path
 from tkinter import filedialog, messagebox
@@ -82,6 +84,12 @@ def extract_origin_referer(url: str) -> str:
     return url
 
 
+def get_resource_path(relative_path: str) -> Path:
+    """PyInstaller (.exe) veya normal Python çalışmasında dosya yolunu bulur."""
+    base_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    return base_path / relative_path
+
+
 class VideoDownloaderApp(ctk.CTk):
     """CustomTkinter ve yt-dlp tabanlı masaüstü video ve ses indirme uygulaması."""
 
@@ -98,9 +106,16 @@ class VideoDownloaderApp(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
 
-        self.title("Evrensel Video İndirici (yt-dlp)")
+        self.title("Videomatik — Evrensel Video & Ses İndirici")
         self.geometry("800x690")
         self.minsize(720, 620)
+
+        icon_path = get_resource_path("assets/icon.ico")
+        if icon_path.is_file():
+            try:
+                self.iconbitmap(str(icon_path))
+            except Exception:
+                pass
 
         self.download_dir = str(Path.home() / "Downloads")
         self.is_downloading = False
@@ -120,7 +135,7 @@ class VideoDownloaderApp(ctk.CTk):
 
         title_label = ctk.CTkLabel(
             header_frame,
-            text="Video & Ses İndirici",
+            text="Videomatik — Video & Ses İndirici",
             font=ctk.CTkFont(size=22, weight="bold"),
         )
         title_label.grid(row=0, column=0, padx=16, pady=(12, 2), sticky="w")
@@ -132,6 +147,17 @@ class VideoDownloaderApp(ctk.CTk):
             text_color=("gray40", "gray70"),
         )
         subtitle_label.grid(row=1, column=0, padx=16, pady=(0, 12), sticky="w")
+
+        shortcut_btn = ctk.CTkButton(
+            header_frame,
+            text="Masaüstüne Kısayol Ekle",
+            width=165,
+            height=34,
+            fg_color=("gray75", "gray25"),
+            hover_color=("gray65", "gray35"),
+            command=self.create_desktop_shortcut,
+        )
+        shortcut_btn.grid(row=0, column=1, rowspan=2, padx=16, pady=12, sticky="e")
 
         # 2. URL Giriş Alanı
         url_frame = ctk.CTkFrame(self, corner_radius=12)
@@ -382,6 +408,50 @@ class VideoDownloaderApp(ctk.CTk):
     def open_download_directory(self) -> None:
         if os.path.isdir(self.download_dir):
             os.startfile(self.download_dir)
+
+    def create_desktop_shortcut(self) -> None:
+        """Kullanıcının Masaüstüne ikonlu Videomatik kısayolu (.lnk) oluşturur."""
+        if sys.platform != "win32":
+            messagebox.showinfo("Bilgi", "Masaüstü kısayolu oluşturma yalnızca Windows'ta desteklenir.")
+            return
+
+        try:
+            if getattr(sys, "frozen", False):
+                target_path = str(Path(sys.executable).resolve())
+                arguments = ""
+                working_dir = str(Path(sys.executable).resolve().parent)
+                icon_loc = target_path
+            else:
+                python_exe = Path(sys.executable).resolve()
+                pythonw_exe = python_exe.with_name("pythonw.exe")
+                target_path = str(pythonw_exe if pythonw_exe.is_file() else python_exe)
+                script_path = Path(__file__).resolve()
+                arguments = f'"{script_path}"'
+                working_dir = str(script_path.parent)
+                icon_file = get_resource_path("assets/icon.ico")
+                icon_loc = str(icon_file) if icon_file.is_file() else target_path
+
+            ps_script = (
+                "$desktop = [Environment]::GetFolderPath('Desktop'); "
+                "$s = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop 'Videomatik.lnk')); "
+                f"$s.TargetPath = '{target_path}'; "
+                f"$s.Arguments = '{arguments}'; "
+                f"$s.WorkingDirectory = '{working_dir}'; "
+                f"$s.IconLocation = '{icon_loc}'; "
+                "$s.Description = 'Videomatik - Evrensel Video ve Ses Indirici'; "
+                "$s.Save()"
+            )
+            subprocess.run(
+                ["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", ps_script],
+                check=True,
+                creationflags= getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            messagebox.showinfo(
+                "Kısayol Oluşturuldu",
+                "Masaüstünüze 'Videomatik' uygulama kısayolu başarıyla eklendi!",
+            )
+        except Exception as exc:
+            messagebox.showerror("Hata", f"Kısayol oluşturulurken hata oluştu:\n{exc}")
 
     def _get_common_ydl_opts(self, url: str, proxy_str: str = "") -> dict[str, Any]:
         """Standart tarayıcı başlıkları, yeniden deneme ve bağlantı ayarlarını döndürür."""

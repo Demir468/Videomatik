@@ -19,6 +19,11 @@ ENV/
 *.part
 *.ytdl
 
+# PyInstaller
+build/
+dist/
+*.spec
+
 # IDE ve İşletim Sistemi
 .vscode/
 .idea/
