@@ -23,7 +23,6 @@
       --text: #f8fafc;
       --muted: #94a3b8;
       --success: #10b981;
-      --danger: #ef4444;
     }
 
     * {
@@ -177,7 +176,7 @@
       border: 1px solid var(--card-border);
     }
 
-    .thumb-wrap img, .thumb-wrap video {
+    .thumb-wrap img {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -231,18 +230,30 @@
     }
 
     .status-box {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       color: var(--accent);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       min-height: 20px;
       line-height: 1.45;
       word-break: break-word;
     }
 
-    .download-actions {
-      display: flex;
+    .cloud-widget-wrap {
+      display: none;
       flex-direction: column;
       gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .cloud-iframe {
+      width: 100%;
+      height: 62px;
+      border: none;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0f172a;
     }
 
     .direct-links {
@@ -250,24 +261,6 @@
       flex-direction: column;
       gap: 8px;
       margin-top: 10px;
-      padding-top: 12px;
-      border-top: 1px solid var(--card-border);
-    }
-
-    .settings-toggle {
-      font-size: 0.82rem;
-      color: var(--muted);
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 8px;
-      display: inline-block;
-    }
-
-    .api-settings {
-      display: none;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid var(--card-border);
     }
 
     .footer {
@@ -291,7 +284,7 @@
         <img src="./icon.png" alt="Videomatik Logo" onerror="this.style.display='none'" />
         <div>
           <h1>Videomatik Web</h1>
-          <p>Mobil & Masaüstü Video ve Ses İndirici</p>
+          <p>7/24 Bulut Tabanlı Mobil & Web Video İndirici</p>
         </div>
       </div>
       <div class="badge-row">
@@ -308,7 +301,7 @@
           type="url"
           id="urlInput"
           class="input"
-          placeholder="Video bağlantısını yapıştırın (YouTube, TikTok, Reddit, X, MP4...)"
+          placeholder="Video bağlantısını yapıştırın (YouTube, TikTok, Reddit, X, Vimeo...)"
           autocomplete="off"
         />
         <button class="btn btn-secondary" id="pasteBtn" type="button">Yapıştır</button>
@@ -321,10 +314,10 @@
       <div class="thumb-wrap" id="thumbBox">Önizleme Yok</div>
       <div class="preview-info">
         <div class="preview-title" id="videoTitle">
-          Henüz bir video analiz edilmedi. Bağlantıyı yapıştırıp "Analiz Et" veya "İndir" butonuna dokunun.
+          Henüz bir video seçilmedi. Bağlantıyı yapıştırıp "Analiz Et" veya "Hazırla" butonuna dokunun.
         </div>
-        <div class="preview-meta" id="videoMeta">Kaynak: - | Süre: -</div>
-        <div class="preview-meta" id="videoMode">Sunucu kontrol ediliyor...</div>
+        <div class="preview-meta" id="videoMeta">Kaynak: - | Platform: -</div>
+        <div class="preview-meta" style="color: #10b981;">⚡ 7/24 Bulut Modu (Bilgisayar Kapalıyken Çalışır)</div>
       </div>
     </div>
 
@@ -335,14 +328,15 @@
           <label class="field-label" for="formatSelect">Format Türü</label>
           <select id="formatSelect" class="input">
             <option value="mp4">MP4 (Video + Ses)</option>
-            <option value="mp3">MP3 / Ses (Sadece Ses)</option>
+            <option value="mp3">MP3 (Sadece Ses)</option>
+            <option value="m4a">M4A (Yüksek Kalite Ses)</option>
           </select>
         </div>
         <div>
           <label class="field-label" for="qualitySelect">Çözünürlük / Kalite</label>
           <select id="qualitySelect" class="input">
-            <option value="best">En İyi Kalite (Otomatik)</option>
-            <option value="2160">2160p (4K)</option>
+            <option value="4k">2160p (4K Ultra HD)</option>
+            <option value="1440">1440p (2K QHD)</option>
             <option value="1080" selected>1080p (Full HD)</option>
             <option value="720">720p (HD)</option>
             <option value="480">480p (SD)</option>
@@ -350,35 +344,33 @@
           </select>
         </div>
       </div>
-
-      <span class="settings-toggle" id="toggleSettings">⚙️ Gelişmiş Sunucu (yt-dlp Backend) Ayarları</span>
-      <div class="api-settings" id="apiSettingsBox">
-        <label class="field-label" for="apiBaseInput">
-          Özel yt-dlp Sunucu Adresi (Bilgisayarınızda Web_Sitesi_Baslat.bat açıksa otomatik bağlanır):
-        </label>
-        <input
-          type="url"
-          id="apiBaseInput"
-          class="input"
-          style="width: 100%;"
-          placeholder="Örn: http://127.0.0.1:8000 veya http://192.168.1.21:8000"
-        />
-      </div>
     </div>
 
     <!-- İndirme Alanı -->
     <div class="card">
-      <div class="status-box" id="statusText">Hazır</div>
-      <div class="download-actions">
-        <button class="btn btn-primary" id="downloadBtn" style="padding: 14px; font-size: 1rem;">
-          ⬇️ Videoyu Hazırla ve İndir
-        </button>
-      </div>
+      <div class="status-box" id="statusText">Hazır — Bağlantıyı yapıştırıp aşağıdaki butona dokunun.</div>
+      <button class="btn btn-primary" id="prepareBtn" style="width: 100%; padding: 14px; font-size: 1rem;">
+        ⚡ Videoyu Bulutta Hazırla
+      </button>
+
+      <!-- Doğrudan İndirme Linkleri (TikTok / Reddit / MP4 için) -->
       <div class="direct-links" id="directLinksBox"></div>
+
+      <!-- Bulut Dönüştürücü Widget (YouTube, X, Vimeo, SoundCloud, Twitch vb. için) -->
+      <div class="cloud-widget-wrap" id="cloudWidgetWrap">
+        <div class="field-label" style="color: #f8fafc;">
+          👇 Dönüştürme tamamlandığında aşağıdaki yeşil kutuya dokunarak cihazınıza kaydedin:
+        </div>
+        <iframe
+          id="cloudIframe"
+          class="cloud-iframe"
+          sandbox="allow-scripts allow-same-origin allow-downloads allow-top-navigation-by-user-activation"
+        ></iframe>
+      </div>
     </div>
 
     <div class="footer">
-      📱 <strong>İpucu (Mobil):</strong> Tarayıcı menüsünden <em>"Ana Ekrana Ekle"</em> seçeneği ile telefonunuza uygulama olarak kurabilirsiniz.<br />
+      📱 <strong>İpucu (Mobil):</strong> Tarayıcı menüsünden <em>"Ana Ekrana Ekle"</em> seçeneği ile telefonunuza uygulama kısayolu olarak ekleyebilirsiniz.<br />
       <a href="https://github.com/Demir468/Videomatik" target="_blank">GitHub — Demir468/Videomatik</a>
     </div>
   </div>
@@ -387,75 +379,55 @@
     const urlInput = document.getElementById("urlInput");
     const pasteBtn = document.getElementById("pasteBtn");
     const analyzeBtn = document.getElementById("analyzeBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
+    const prepareBtn = document.getElementById("prepareBtn");
     const formatSelect = document.getElementById("formatSelect");
     const qualitySelect = document.getElementById("qualitySelect");
     const statusText = document.getElementById("statusText");
     const videoTitle = document.getElementById("videoTitle");
     const videoMeta = document.getElementById("videoMeta");
-    const videoMode = document.getElementById("videoMode");
     const thumbBox = document.getElementById("thumbBox");
     const directLinksBox = document.getElementById("directLinksBox");
-    const toggleSettings = document.getElementById("toggleSettings");
-    const apiSettingsBox = document.getElementById("apiSettingsBox");
-    const apiBaseInput = document.getElementById("apiBaseInput");
+    const cloudWidgetWrap = document.getElementById("cloudWidgetWrap");
+    const cloudIframe = document.getElementById("cloudIframe");
 
-    const isSelfHostedBackend =
-      window.location.protocol.startsWith("http") && !window.location.hostname.endsWith("github.io");
-    let detectedBackend =
-      localStorage.getItem("videomatik_api_base") || (isSelfHostedBackend ? window.location.origin : "");
-    apiBaseInput.value = detectedBackend;
-
-    // Bilgisayarda çalışan yerel yt-dlp sunucusunu (127.0.0.1:8000) otomatik algıla
-    async function autoDetectLocalServer() {
-      if (detectedBackend) {
-        videoMode.textContent = `Mod: yt-dlp Sunucusu (${detectedBackend})`;
-        return;
-      }
-      try {
-        const ctrl = new AbortController();
-        setTimeout(() => ctrl.abort(), 1500);
-        const res = await fetch("http://127.0.0.1:8000/api/health", { signal: ctrl.signal });
-        if (res.ok) {
-          detectedBackend = "http://127.0.0.1:8000";
-          apiBaseInput.value = detectedBackend;
-          videoMode.textContent = "Mod: Yerel yt-dlp Sunucusu Bağlandı (1000+ Site Aktif)";
-          return;
-        }
-      } catch {}
-      videoMode.textContent = "Mod: Tarayıcı İçi Çözücü (GitHub Pages)";
-    }
-    autoDetectLocalServer();
-
-    apiBaseInput.addEventListener("change", () => {
-      detectedBackend = apiBaseInput.value.trim().replace(/\/+$/, "");
-      localStorage.setItem("videomatik_api_base", detectedBackend);
-      videoMode.textContent = detectedBackend
-        ? `Mod: yt-dlp Sunucusu (${detectedBackend})`
-        : "Mod: Tarayıcı İçi Çözücü (GitHub Pages)";
+    formatSelect.addEventListener("change", () => {
+      qualitySelect.disabled = formatSelect.value !== "mp4";
+      if (urlInput.value.trim()) updateCloudWidget(urlInput.value.trim());
     });
 
-    toggleSettings.addEventListener("click", () => {
-      apiSettingsBox.style.display = apiSettingsBox.style.display === "block" ? "none" : "block";
+    qualitySelect.addEventListener("change", () => {
+      if (urlInput.value.trim()) updateCloudWidget(urlInput.value.trim());
     });
 
     pasteBtn.addEventListener("click", async () => {
       try {
         const text = await navigator.clipboard.readText();
-        if (text) urlInput.value = text.trim();
+        if (text) {
+          urlInput.value = text.trim();
+          handleProcess();
+        }
       } catch {
         urlInput.focus();
       }
     });
 
-    function getBackendBase() {
-      return apiBaseInput.value.trim().replace(/\/+$/, "");
+    function getCloudFormatCode() {
+      const fmt = formatSelect.value;
+      if (fmt === "mp3") return "mp3";
+      if (fmt === "m4a") return "m4a";
+      return qualitySelect.value || "1080";
     }
 
-    function setPreview({ title, uploader, duration, thumbnail, mode }) {
-      videoTitle.textContent = title || "Video Bulundu";
-      videoMeta.textContent = `Kaynak: ${uploader || "Web"} | Süre: ${duration || "-"}`;
-      if (mode) videoMode.textContent = `Mod: ${mode}`;
+    function updateCloudWidget(url) {
+      const fCode = getCloudFormatCode();
+      const widgetUrl = `https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=${encodeURIComponent(fCode)}&color=10b981`;
+      cloudIframe.src = widgetUrl;
+      cloudWidgetWrap.style.display = "flex";
+    }
+
+    function setPreview({ title, uploader, provider, thumbnail }) {
+      videoTitle.textContent = title || "Video Hazır";
+      videoMeta.textContent = `Kanal: ${uploader || "-"} | Platform: ${provider || "Web"}`;
       if (thumbnail) {
         thumbBox.innerHTML = `<img src="${thumbnail}" alt="Önizleme" referrerpolicy="no-referrer" />`;
       }
@@ -466,7 +438,7 @@
       directLinksBox.style.display = "flex";
       items.forEach((item) => {
         const a = document.createElement("a");
-        a.className = item.className || "btn btn-success";
+        a.className = "btn btn-success";
         a.href = item.url;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
@@ -476,83 +448,7 @@
       });
     }
 
-    // 1) TikTok Çözücü (Tarayıcı İçi - Sunucusuz)
-    async function resolveTikTok(url) {
-      const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      if (data && data.code === 0 && data.data) {
-        const d = data.data;
-        return {
-          title: d.title || "TikTok Videosu",
-          uploader: d.author ? d.author.nickname : "TikTok",
-          duration: d.duration ? `${d.duration} sn` : "-",
-          thumbnail: d.cover,
-          links: [
-            { label: "⬇️ HD Video İndir (Filigransız MP4)", url: d.hdplay || d.play },
-            ...(d.music ? [{ label: "🎵 Sadece Ses İndir (MP3)", url: d.music }] : []),
-          ],
-        };
-      }
-      throw new Error("TikTok videosu çözümlenemedi.");
-    }
-
-    // 2) Reddit Çözücü (Tarayıcı İçi - Sunucusuz)
-    async function resolveReddit(url) {
-      const cleanUrl = url.split("?")[0].replace(/\/+$/, "");
-      const res = await fetch(`${cleanUrl}.json`);
-      const json = await res.json();
-      const post = json?.[0]?.data?.children?.[0]?.data;
-      const fallbackUrl =
-        post?.secure_media?.reddit_video?.fallback_url ||
-        post?.preview?.reddit_video_preview?.fallback_url;
-      if (fallbackUrl) {
-        return {
-          title: post.title || "Reddit Videosu",
-          uploader: `r/${post.subreddit || "reddit"}`,
-          duration: post.secure_media?.reddit_video?.duration
-            ? `${post.secure_media.reddit_video.duration} sn`
-            : "-",
-          thumbnail: post.thumbnail && post.thumbnail.startsWith("http") ? post.thumbnail : null,
-          links: [{ label: "⬇️ Reddit MP4 Video İndir", url: fallbackUrl }],
-        };
-      }
-      throw new Error("Bu Reddit bağlantısında doğrudan video bulunamadı.");
-    }
-
-    // 3) NoEmbed + Doğrudan Medya Çözücü (YouTube, Vimeo, X, SoundCloud vb. Önizleme)
-    async function resolveOEmbedOrDirect(url) {
-      if (/\.(mp4|webm|m4a|mp3|mov)(\?.*)?$/i.test(url)) {
-        const fileName = url.split("/").pop().split("?")[0] || "video.mp4";
-        return {
-          title: fileName,
-          uploader: new URL(url).hostname,
-          duration: "Doğrudan Medya",
-          thumbnail: null,
-          links: [{ label: `⬇️ Doğrudan İndir (${fileName})`, url, download: fileName }],
-          needsBackendForStream: false,
-        };
-      }
-
-      const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
-      const oembed = await oembedRes.json();
-      if (oembed && !oembed.error && oembed.title) {
-        return {
-          title: oembed.title,
-          uploader: oembed.author_name || oembed.provider_name || new URL(url).hostname,
-          duration: oembed.provider_name || "Video",
-          thumbnail: oembed.thumbnail_url || null,
-          links: [],
-          needsBackendForStream: true,
-        };
-      }
-
-      throw new Error(
-        "Bu siteyi doğrudan tarayıcıda çözmek için yt-dlp Python sunucusu gereklidir. Bilgisayarınızda 'Web_Sitesi_Baslat.bat' dosyasını çalıştırın veya Masaüstü (.exe) uygulamasını kullanın."
-      );
-    }
-
-    async function processVideo(isDownloadAction) {
+    async function handleProcess() {
       const url = urlInput.value.trim();
       if (!url) {
         statusText.textContent = "⚠️ Lütfen önce bir video bağlantısı (URL) girin.";
@@ -560,90 +456,114 @@
       }
 
       directLinksBox.style.display = "none";
+      cloudWidgetWrap.style.display = "none";
       analyzeBtn.disabled = true;
-      downloadBtn.disabled = true;
-      statusText.textContent = "⏳ Video analiz ediliyor, lütfen bekleyin...";
-
-      await autoDetectLocalServer();
-      const backendBase = getBackendBase();
+      prepareBtn.disabled = true;
+      statusText.textContent = "⏳ Video bilgileri alınıyor ve bulut indirici hazırlanıyor...";
 
       try {
-        // A) Eğer Python yt-dlp Backend Sunucusu aktifse 1000+ siteyi doğrudan indir
-        if (backendBase) {
-          const infoRes = await fetch(`${backendBase}/api/analyze?url=${encodeURIComponent(url)}`);
-          const infoData = await infoRes.json();
-          if (!infoRes.ok) throw new Error(infoData.detail || "Sunucu hatası");
+        const lower = url.toLowerCase();
 
-          setPreview({
-            title: infoData.title,
-            uploader: infoData.uploader,
-            duration: infoData.duration_str,
-            thumbnail: infoData.thumbnail,
-            mode: `yt-dlp Sunucusu (${backendBase})`,
-          });
-
-          const dlUrl = `${backendBase}/api/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(formatSelect.value)}&quality=${encodeURIComponent(qualitySelect.value)}`;
-          showDirectButtons([
-            {
-              label: `⬇️ İndir (${formatSelect.value.toUpperCase()} - ${qualitySelect.value === "best" ? "En İyi" : qualitySelect.value + "p"})`,
-              url: dlUrl,
-            },
-          ]);
-          statusText.textContent = "✅ Hazır! Aşağıdaki yeşil butona dokunarak indirmeyi başlatabilirsiniz.";
-          if (isDownloadAction) {
-            window.location.href = dlUrl;
+        // 1) TikTok için doğrudan filigransız HD MP4 ve MP3 çözücü
+        if (lower.includes("tiktok.com")) {
+          const res = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`);
+          const data = await res.json();
+          if (data && data.code === 0 && data.data) {
+            const d = data.data;
+            setPreview({
+              title: d.title || "TikTok Videosu",
+              uploader: d.author ? d.author.nickname : "TikTok",
+              provider: "TikTok",
+              thumbnail: d.cover,
+            });
+            showDirectButtons([
+              { label: "⬇️ HD Video İndir (Filigransız MP4)", url: d.hdplay || d.play },
+              ...(d.music ? [{ label: "🎵 Sadece Ses İndir (MP3)", url: d.music }] : []),
+            ]);
+            statusText.textContent = "✅ TikTok videosu hazır! Aşağıdaki yeşil butona dokunarak indirin.";
+            return;
           }
+        }
+
+        // 2) Reddit için doğrudan MP4 çözücü
+        if (lower.includes("reddit.com") || lower.includes("redd.it")) {
+          try {
+            const cleanUrl = url.split("?")[0].replace(/\/+$/, "");
+            const res = await fetch(`${cleanUrl}.json`);
+            const json = await res.json();
+            const post = json?.[0]?.data?.children?.[0]?.data;
+            const fallbackUrl =
+              post?.secure_media?.reddit_video?.fallback_url ||
+              post?.preview?.reddit_video_preview?.fallback_url;
+            if (fallbackUrl) {
+              setPreview({
+                title: post.title || "Reddit Videosu",
+                uploader: `r/${post.subreddit || "reddit"}`,
+                provider: "Reddit",
+                thumbnail: post.thumbnail && post.thumbnail.startsWith("http") ? post.thumbnail : null,
+              });
+              showDirectButtons([{ label: "⬇️ Reddit MP4 Video İndir", url: fallbackUrl }]);
+              statusText.textContent = "✅ Reddit videosu hazır! Aşağıdaki yeşil butona dokunarak indirin.";
+              return;
+            }
+          } catch {}
+        }
+
+        // 3) Doğrudan .mp4 / .mp3 bağlantıları
+        if (/\.(mp4|webm|m4a|mp3|mov)(\?.*)?$/i.test(url)) {
+          const fileName = url.split("/").pop().split("?")[0] || "video.mp4";
+          setPreview({
+            title: fileName,
+            uploader: new URL(url).hostname,
+            provider: "Doğrudan Medya",
+            thumbnail: null,
+          });
+          showDirectButtons([{ label: `⬇️ Doğrudan İndir (${fileName})`, url, download: fileName }]);
+          statusText.textContent = "✅ Doğrudan medya bağlantısı hazır!";
           return;
         }
 
-        // B) Sunucusuz (GitHub Pages Tarayıcı İçi) Çözücüler
-        let result = null;
-        const lower = url.toLowerCase();
-        if (lower.includes("tiktok.com")) {
-          result = await resolveTikTok(url);
-        } else if (lower.includes("reddit.com") || lower.includes("redd.it")) {
-          result = await resolveReddit(url);
-        } else {
-          result = await resolveOEmbedOrDirect(url);
+        // 4) YouTube, Vimeo, X/Twitter, SoundCloud, Twitch vb. için Bulut Önizleme + Bulut Dönüştürücü
+        try {
+          const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+          const oembed = await oembedRes.json();
+          if (oembed && !oembed.error && oembed.title) {
+            setPreview({
+              title: oembed.title,
+              uploader: oembed.author_name || oembed.provider_name,
+              provider: oembed.provider_name || new URL(url).hostname,
+              thumbnail: oembed.thumbnail_url || null,
+            });
+          } else {
+            setPreview({
+              title: "Bulut Video Akışı",
+              uploader: new URL(url).hostname,
+              provider: new URL(url).hostname,
+              thumbnail: null,
+            });
+          }
+        } catch {
+          setPreview({
+            title: "Bulut Video Akışı",
+            uploader: "Web",
+            provider: "Bulut",
+            thumbnail: null,
+          });
         }
 
-        setPreview({
-          title: result.title,
-          uploader: result.uploader,
-          duration: result.duration,
-          thumbnail: result.thumbnail,
-          mode: "Tarayıcı İçi Çözücü (GitHub Pages)",
-        });
-
-        if (result.needsBackendForStream) {
-          showDirectButtons([
-            {
-              label: "💻 Windows Masaüstü Uygulamasını (.exe) İndir",
-              url: "https://github.com/Demir468/Videomatik/releases/latest",
-              className: "btn btn-primary",
-            },
-            {
-              label: "☁️ Ücretsiz Bulut Sunucusu Kur (Render.com)",
-              url: "https://render.com/deploy?repo=https://github.com/Demir468/Videomatik",
-              className: "btn btn-secondary",
-            },
-          ]);
-          statusText.textContent =
-            "ℹ️ Video bilgileri alındı! YouTube/X videolarını MP4/MP3 olarak birleştirmek için arka planda yt-dlp sunucusu gerekir: Bilgisayarınızda 'Web_Sitesi_Baslat.bat' dosyasını açıp sayfayı yenileyin (veya telefondan http://192.168.1.21:8000 adresine girin).";
-        } else {
-          showDirectButtons(result.links);
-          statusText.textContent = "✅ Video bağlantıları bulundu! İndirmek için aşağıdaki yeşil butona dokunun.";
-        }
+        updateCloudWidget(url);
+        statusText.textContent =
+          "✅ Video analiz edildi! Bulut dönüştürücü aşağıda hazırlandı (%100 olduğunda 'Download Now!' butonuna dokunun).";
       } catch (err) {
-        statusText.textContent = `❌ ${err.message}`;
+        statusText.textContent = `❌ Hata: ${err.message}`;
       } finally {
         analyzeBtn.disabled = false;
-        downloadBtn.disabled = false;
+        prepareBtn.disabled = false;
       }
     }
 
-    analyzeBtn.addEventListener("click", () => processVideo(false));
-    downloadBtn.addEventListener("click", () => processVideo(true));
+    analyzeBtn.addEventListener("click", handleProcess);
+    prepareBtn.addEventListener("click", handleProcess);
   </script>
 </body>
 </html>
