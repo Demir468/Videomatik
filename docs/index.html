@@ -420,7 +420,7 @@
 
     function updateCloudWidget(url) {
       const fCode = getCloudFormatCode();
-      const widgetUrl = `https://loader.to/api/button/?url=${encodeURIComponent(url)}&f=${encodeURIComponent(fCode)}&color=10b981`;
+      const widgetUrl = `https://p.savenow.to/api/button/?url=${encodeURIComponent(url)}&f=${encodeURIComponent(fCode)}&color=10b981`;
       cloudIframe.src = widgetUrl;
       cloudWidgetWrap.style.display = "flex";
     }
