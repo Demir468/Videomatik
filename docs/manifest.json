@@ -1,0 +1,17 @@
+{
+  "name": "Videomatik — Video & Ses İndirici",
+  "short_name": "Videomatik",
+  "description": "Mobil ve masaüstü uyumlu evrensel video ve ses indirme web uygulaması.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1f6aa5",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

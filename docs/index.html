@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Videomatik" />
+  <title>Videomatik — Web & Mobil Video İndirici</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" href="./icon.png" />
+  <link rel="apple-touch-icon" href="./icon.png" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --input-bg: #0f172a;
+      --primary: #1f6aa5;
+      --primary-hover: #2563eb;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .brand p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-secondary {
+      background: #334155;
+    }
+    .btn-secondary:hover {
+      background: #475569;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .url-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .input {
+      flex: 1;
+      min-width: 200px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .input:focus {
+      border-color: var(--accent);
+    }
+
+    .preview-box {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .thumb-wrap {
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 16 / 9;
+      background: #0f172a;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      border: 1px solid var(--card-border);
+    }
+
+    .thumb-wrap img, .thumb-wrap video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-info {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .preview-title {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .preview-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .thumb-wrap {
+        max-width: 100%;
+      }
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    select.input {
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .status-box {
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+      min-height: 20px;
+      word-break: break-word;
+    }
+
+    .download-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .direct-links {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .settings-toggle {
+      font-size: 0.82rem;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .api-settings {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Başlık -->
+    <div class="card header">
+      <div class="brand">
+        <img src="./icon.png" alt="Videomatik Logo" onerror="this.style.display='none'" />
+        <div>
+          <h1>Videomatik Web</h1>
+          <p>Mobil & Masaüstü Video ve Ses İndirici</p>
+        </div>
+      </div>
+      <div class="badge-row">
+        <a class="btn btn-secondary" href="https://github.com/Demir468/Videomatik/releases/latest" target="_blank">
+          💻 Windows (.exe) İndir
+        </a>
+      </div>
+    </div>
+
+    <!-- URL Girişi -->
+    <div class="card">
+      <div class="url-group">
+        <input
+          type="url"
+          id="urlInput"
+          class="input"
+          placeholder="Video bağlantısını yapıştırın (TikTok, Reddit, X, YouTube, MP4...)"
+          autocomplete="off"
+        />
+        <button class="btn btn-secondary" id="pasteBtn" type="button">Yapıştır</button>
+        <button class="btn btn-primary" id="analyzeBtn" type="button">Analiz Et</button>
+      </div>
+    </div>
+
+    <!-- Önizleme -->
+    <div class="card preview-box">
+      <div class="thumb-wrap" id="thumbBox">Önizleme Yok</div>
+      <div class="preview-info">
+        <div class="preview-title" id="videoTitle">
+          Henüz bir video analiz edilmedi. Bağlantıyı yapıştırıp "Analiz Et" veya "İndir" butonuna dokunun.
+        </div>
+        <div class="preview-meta" id="videoMeta">Kaynak: - | Süre: -</div>
+        <div class="preview-meta" id="videoMode">Mod: Akıllı Web Çözücü</div>
+      </div>
+    </div>
+
+    <!-- Seçenekler -->
+    <div class="card">
+      <div class="options-grid">
+        <div>
+          <label class="field-label" for="formatSelect">Format Türü</label>
+          <select id="formatSelect" class="input">
+            <option value="mp4">MP4 (Video + Ses)</option>
+            <option value="mp3">MP3 / Ses (Sadece Ses)</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="qualitySelect">Çözünürlük / Kalite</label>
+          <select id="qualitySelect" class="input">
+            <option value="best">En İyi Kalite (Otomatik)</option>
+            <option value="2160">2160p (4K)</option>
+            <option value="1080" selected>1080p (Full HD)</option>
+            <option value="720">720p (HD)</option>
+            <option value="480">480p (SD)</option>
+            <option value="360">360p (Düşük)</option>
+          </select>
+        </div>
+      </div>
+
+      <span class="settings-toggle" id="toggleSettings">⚙️ Gelişmiş Sunucu (yt-dlp Backend) Ayarları</span>
+      <div class="api-settings" id="apiSettingsBox">
+        <label class="field-label" for="apiBaseInput">
+          Özel yt-dlp Sunucu Adresi (Boş bırakılırsa yerleşik tarayıcı çözücüsü kullanılır):
+        </label>
+        <input
+          type="url"
+          id="apiBaseInput"
+          class="input"
+          style="width: 100%;"
+          placeholder="Örn: http://192.168.1.10:8000 veya https://videomatik.onrender.com"
+        />
+      </div>
+    </div>
+
+    <!-- İndirme Alanı -->
+    <div class="card">
+      <div class="status-box" id="statusText">Hazır</div>
+      <div class="download-actions">
+        <button class="btn btn-primary" id="downloadBtn" style="padding: 14px; font-size: 1rem;">
+          ⬇️ Videoyu Hazırla ve İndir
+        </button>
+      </div>
+      <div class="direct-links" id="directLinksBox"></div>
+    </div>
+
+    <div class="footer">
+      📱 <strong>İpucu (Mobil):</strong> Tarayıcı menüsünden <em>"Ana Ekrana Ekle"</em> seçeneği ile telefonunuza uygulama olarak kurabilirsiniz.<br />
+      <a href="https://github.com/Demir468/Videomatik" target="_blank">GitHub — Demir468/Videomatik</a>
+    </div>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById("urlInput");
+    const pasteBtn = document.getElementById("pasteBtn");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const formatSelect = document.getElementById("formatSelect");
+    const qualitySelect = document.getElementById("qualitySelect");
+    const statusText = document.getElementById("statusText");
+    const videoTitle = document.getElementById("videoTitle");
+    const videoMeta = document.getElementById("videoMeta");
+    const videoMode = document.getElementById("videoMode");
+    const thumbBox = document.getElementById("thumbBox");
+    const directLinksBox = document.getElementById("directLinksBox");
+    const toggleSettings = document.getElementById("toggleSettings");
+    const apiSettingsBox = document.getElementById("apiSettingsBox");
+    const apiBaseInput = document.getElementById("apiBaseInput");
+
+    // Eğer sayfa kendi Python FastAPI sunucumuzdan (web_app.py) açıldıysa otomatik algıla
+    const isSelfHostedBackend = window.location.protocol.startsWith("http") && !window.location.hostname.endsWith("github.io");
+    const savedApi = localStorage.getItem("videomatik_api_base") || (isSelfHostedBackend ? window.location.origin : "");
+    apiBaseInput.value = savedApi;
+
+    apiBaseInput.addEventListener("change", () => {
+      localStorage.setItem("videomatik_api_base", apiBaseInput.value.trim().replace(/\/+$/, ""));
+    });
+
+    toggleSettings.addEventListener("click", () => {
+      apiSettingsBox.style.display = apiSettingsBox.style.display === "block" ? "none" : "block";
+    });
+
+    pasteBtn.addEventListener("click", async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) urlInput.value = text.trim();
+      } catch {
+        urlInput.focus();
+      }
+    });
+
+    function getBackendBase() {
+      return apiBaseInput.value.trim().replace(/\/+$/, "");
+    }
+
+    function setPreview({ title, uploader, duration, thumbnail, mode }) {
+      videoTitle.textContent = title || "Video Bulundu";
+      videoMeta.textContent = `Kaynak: ${uploader || "Web"} | Süre: ${duration || "-"}`;
+      if (mode) videoMode.textContent = `Mod: ${mode}`;
+      if (thumbnail) {
+        thumbBox.innerHTML = `<img src="${thumbnail}" alt="Önizleme" referrerpolicy="no-referrer" />`;
+      }
+    }
+
+    function showDirectButtons(items) {
+      directLinksBox.innerHTML = "";
+      directLinksBox.style.display = "flex";
+      items.forEach((item) => {
+        const a = document.createElement("a");
+        a.className = "btn btn-success";
+        a.href = item.url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        if (item.download) a.setAttribute("download", item.download);
+        a.textContent = item.label;
+        directLinksBox.appendChild(a);
+      });
+    }
+
+    // 1) TikTok Çözücü (Tarayıcı İçi - Sunucusuz)
+    async function resolveTikTok(url) {
+      const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      if (data && data.code === 0 && data.data) {
+        const d = data.data;
+        return {
+          title: d.title || "TikTok Videosu",
+          uploader: d.author ? d.author.nickname : "TikTok",
+          duration: d.duration ? `${d.duration} sn` : "-",
+          thumbnail: d.cover,
+          links: [
+            { label: "⬇️ HD Video İndir (Filigransız MP4)", url: d.hdplay || d.play },
+            ...(d.music ? [{ label: "🎵 Sadece Ses İndir (MP3)", url: d.music }] : []),
+          ],
+        };
+      }
+      throw new Error("TikTok videosu çözümlenemedi.");
+    }
+
+    // 2) Reddit Çözücü (Tarayıcı İçi - Sunucusuz)
+    async function resolveReddit(url) {
+      const cleanUrl = url.split("?")[0].replace(/\/+$/, "");
+      const res = await fetch(`${cleanUrl}.json`);
+      const json = await res.json();
+      const post = json?.[0]?.data?.children?.[0]?.data;
+      const fallbackUrl =
+        post?.secure_media?.reddit_video?.fallback_url ||
+        post?.preview?.reddit_video_preview?.fallback_url;
+      if (fallbackUrl) {
+        return {
+          title: post.title || "Reddit Videosu",
+          uploader: `r/${post.subreddit || "reddit"}`,
+          duration: post.secure_media?.reddit_video?.duration ? `${post.secure_media.reddit_video.duration} sn` : "-",
+          thumbnail: post.thumbnail && post.thumbnail.startsWith("http") ? post.thumbnail : null,
+          links: [{ label: "⬇️ Reddit MP4 Video İndir", url: fallbackUrl }],
+        };
+      }
+      throw new Error("Bu Reddit bağlantısında doğrudan video bulunamadı.");
+    }
+
+    // 3) Genel Web Sayfası / Doğrudan MP4 Çözücü (CORS Proxy ile <video> ve og:video arama)
+    async function resolveGenericWebpage(url) {
+      if (/\.(mp4|webm|m4a|mp3|mov)(\?.*)?$/i.test(url)) {
+        const fileName = url.split("/").pop().split("?")[0] || "video.mp4";
+        return {
+          title: fileName,
+          uploader: new URL(url).hostname,
+          duration: "Doğrudan Medya",
+          thumbnail: null,
+          links: [{ label: `⬇️ Doğrudan İndir (${fileName})`, url, download: fileName }],
+        };
+      }
+
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      const data = await res.json();
+      const html = data?.contents || "";
+      if (!html) throw new Error("Sayfa içeriği okunamadı.");
+
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const title =
+        doc.querySelector('meta[property="og:title"]')?.content ||
+        doc.querySelector("title")?.textContent ||
+        "Web Videosu";
+      const thumb = doc.querySelector('meta[property="og:image"]')?.content || null;
+
+      const foundUrls = new Set();
+      const ogVideo =
+        doc.querySelector('meta[property="og:video:secure_url"]')?.content ||
+        doc.querySelector('meta[property="og:video"]')?.content ||
+        doc.querySelector('meta[name="twitter:player:stream"]')?.content;
+      if (ogVideo) foundUrls.add(ogVideo);
+
+      doc.querySelectorAll("video, video source, a[href]").forEach((el) => {
+        const src = el.getAttribute("src") || el.getAttribute("href");
+        if (src && /\.(mp4|webm|m4a|mp3)(\?.*)?$/i.test(src)) {
+          try {
+            foundUrls.add(new URL(src, url).href);
+          } catch {}
+        }
+      });
+
+      const regexMatches = html.match(/https?:\/\/[^"'\\\s<>]+\.(?:mp4|webm|m4a)(?:\?[^"'\\\s<>]*)?/gi) || [];
+      regexMatches.forEach((m) => foundUrls.add(m.replace(/\\u0026/g, "&").replace(/\\/g, "")));
+
+      if (foundUrls.size === 0) {
+        throw new Error("Bu sayfada doğrudan açık MP4 akışı bulunamadı. Tam yt-dlp desteği için gelişmiş sunucu modunu kullanın.");
+      }
+
+      const links = Array.from(foundUrls).slice(0, 5).map((u, idx) => ({
+        label: `⬇️ Video Akışı #${idx + 1} İndir / Aç`,
+        url: u,
+      }));
+
+      return {
+        title: title.trim(),
+        uploader: new URL(url).hostname,
+        duration: "-",
+        thumbnail: thumb,
+        links,
+      };
+    }
+
+    async function processVideo(isDownloadAction) {
+      const url = urlInput.value.trim();
+      if (!url) {
+        statusText.textContent = "⚠️ Lütfen önce bir video bağlantısı (URL) girin.";
+        return;
+      }
+
+      directLinksBox.style.display = "none";
+      analyzeBtn.disabled = true;
+      downloadBtn.disabled = true;
+      statusText.textContent = "⏳ Video analiz ediliyor, lütfen bekleyin...";
+
+      const backendBase = getBackendBase();
+
+      try {
+        // A) Eğer Python yt-dlp Backend Sunucusu tanımlıysa onu kullan
+        if (backendBase) {
+          const infoRes = await fetch(`${backendBase}/api/analyze?url=${encodeURIComponent(url)}`);
+          const infoData = await infoRes.json();
+          if (!infoRes.ok) throw new Error(infoData.detail || "Sunucu hatası");
+
+          setPreview({
+            title: infoData.title,
+            uploader: infoData.uploader,
+            duration: infoData.duration_str,
+            thumbnail: infoData.thumbnail,
+            mode: "yt-dlp Python Sunucusu (1000+ Site)",
+          });
+
+          const dlUrl = `${backendBase}/api/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(formatSelect.value)}&quality=${encodeURIComponent(qualitySelect.value)}`;
+          showDirectButtons([
+            {
+              label: `⬇️ İndir (${formatSelect.value.toUpperCase()} - ${qualitySelect.value === "best" ? "En İyi" : qualitySelect.value + "p"})`,
+              url: dlUrl,
+            },
+          ]);
+          statusText.textContent = "✅ Hazır! Aşağıdaki yeşil butona dokunarak indirmeyi başlatabilirsiniz.";
+          if (isDownloadAction) {
+            window.location.href = dlUrl;
+          }
+          return;
+        }
+
+        // B) Sunucusuz (GitHub Pages Tarayıcı İçi) Çözücüler
+        let result = null;
+        const lower = url.toLowerCase();
+        if (lower.includes("tiktok.com")) {
+          result = await resolveTikTok(url);
+        } else if (lower.includes("reddit.com") || lower.includes("redd.it")) {
+          result = await resolveReddit(url);
+        } else {
+          result = await resolveGenericWebpage(url);
+        }
+
+        setPreview({
+          title: result.title,
+          uploader: result.uploader,
+          duration: result.duration,
+          thumbnail: result.thumbnail,
+          mode: "Tarayıcı İçi Doğrudan Çözücü (GitHub Pages)",
+        });
+        showDirectButtons(result.links);
+        statusText.textContent = "✅ Video bağlantıları bulundu! İndirmek için aşağıdaki yeşil butona dokunun.";
+      } catch (err) {
+        statusText.textContent = `❌ ${err.message}`;
+      } finally {
+        analyzeBtn.disabled = false;
+        downloadBtn.disabled = false;
+      }
+    }
+
+    analyzeBtn.addEventListener("click", () => processVideo(false));
+    downloadBtn.addEventListener("click", () => processVideo(true));
+  </script>
+</body>
+</html>

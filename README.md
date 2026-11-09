@@ -1,10 +1,21 @@
-# Videomatik — Evrensel Video & Ses İndirici
+# Videomatik — Evrensel Video & Ses İndirici (Web, Mobil & Masaüstü)
 
-Python, **CustomTkinter** ve **yt-dlp** kullanılarak geliştirilmiş modern karanlık tema (Dark Mode) arayüzlü masaüstü video ve ses indirme uygulaması.
+Python, **CustomTkinter**, **yt-dlp** ve **Modern Web (PWA)** teknolojileriyle geliştirilmiş karanlık tema (Dark Mode) video ve ses indirme aracı.
 
 ---
 
-## İndir ve Hemen Kullan (Windows)
+## 🌐 1. Web & Mobil Sürüm (Tarayıcıdan Kullanım)
+
+Telefonunuzdan (Android / iPhone) veya herhangi bir bilgisayardan kurulum yapmadan web sitesi olarak kullanabilirsiniz:
+
+- **GitHub Pages Web Adresi:** **[https://demir468.github.io/Videomatik/](https://demir468.github.io/Videomatik/)**
+  *(Mobil tarayıcınızda açıp **"Ana Ekrana Ekle"** seçeneğiyle telefonunuza uygulama kısayolu olarak ekleyebilirsiniz!)*
+- **Aynı Wi-Fi Ağında Tam `yt-dlp` Sunucusu:** Bilgisayarınızda `Web_Sitesi_Baslat.bat` dosyasına çift tıkladığınızda ekranda beliren `http://192.168.1.x:8000` adresini telefonunuzun tarayıcısına yazarak 1000+ siteden doğrudan telefonunuza MP4/MP3 indirebilirsiniz.
+- **Bulutta 7/24 Ücretsiz Python Sunucusu (Render):** [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Demir468/Videomatik)
+
+---
+
+## 💻 2. Windows Masaüstü Uygulaması (.exe)
 
 Bilgisayarınızda Python kurulu olmasına gerek kalmadan doğrudan uygulama (`.exe`) olarak indirmek için:
 
@@ -16,33 +27,15 @@ Bilgisayarınızda Python kurulu olmasına gerek kalmadan doğrudan uygulama (`.
 
 ## Özellikler
 
-- **1000+ Platform Desteği:** `yt-dlp` altyapısı ile herkese açık ve DRM koruması olmayan video sitelerinden (YouTube, Vimeo, Dailymotion, X/Twitter, Reddit, Twitch klipleri vb.) indirme.
+- **Mobil & Masaüstü Uyumlu:** Hem telefon tarayıcısında çalışan PWA web arayüzü (`docs/index.html` & `web_app.py`) hem de yerel Windows masaüstü uygulaması (`app.py`).
+- **1000+ Platform Desteği:** `yt-dlp` altyapısı ile herkese açık ve DRM koruması olmayan video sitelerinden (YouTube, TikTok, Vimeo, Dailymotion, X/Twitter, Reddit, Twitch klipleri vb.) indirme.
 - **Format Seçimi:**
   - `MP4 (Video + Ses)`
   - `MP3 (Sadece Ses - 192 kbps)`
   - `M4A (Sadece Ses - Orijinal Akış)`
 - **Çözünürlük Seçimi:** `4K (2160p)`, `2K (1440p)`, `1080p (Full HD)`, `720p (HD)`, `480p (SD)`, `360p` ve `En İyi Kalite (Otomatik)`.
 - **Gömülü FFmpeg Desteği:** Sistemde harici FFmpeg kurulu olmasa bile `imageio-ffmpeg` paketiyle yüksek çözünürlüklü ayrı video ve ses akışlarını otomatik birleştirir ve MP3 dönüşümü yapar.
-- **Tek Tıkla Masaüstü Kısayolu:** Uygulama içindeki **"Masaüstüne Kısayol Ekle"** butonu ile özel ikonlu Masaüstü kısayolu oluşturma.
-- **Video Önizleme:** İndirme öncesinde video başlığı, kaynak/kanal, süre, mevcut çözünürlükler ve kapak fotoğrafı (thumbnail) görüntüleme.
-- **Tarayıcı Uyumluluğu & Proxy Desteği:** `curl-cffi` ile modern tarayıcı TLS el sıkışması ve isteğe bağlı HTTP/SOCKS5 Proxy desteği.
-- **Canlı İlerleme Çubuğu:** Anlık yüzde, hız, kalan süre (ETA) ve indirmeyi iptal etme butonu.
-
----
-
-## Kaynak Koddan Çalıştırma (Geliştiriciler İçin)
-
-Projeyi kaynak kod olarak indirip çalıştırmak isterseniz:
-1. Klasör içindeki **`Kurulum_ve_Kisayol.bat`** dosyasına çift tıklamanız yeterlidir (otomatik olarak `.venv` kurar ve Masaüstünüze **Videomatik** kısayolunu ekler).
-2. Veya terminal üzerinden:
-```bash
-git clone https://github.com/Demir468/Videomatik.git
-cd Videomatik
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
-```
+- **Çerez / Oturum Desteği:** YouTube bot doğrulaması veya yaş kısıtlamalı videolar için `cookies.txt` ve tarayıcı oturumu desteği.
 
 ## Yasal Uyarı
 Bu araç yalnızca herkese açık, telif hakkı ihlali oluşturmayan ve DRM (Dijital Haklar Yönetimi / Widevine, FairPlay vb.) şifrelemesi bulunmayan medya içerikleri için eğitim ve kişisel kullanım amacıyla geliştirilmiştir.
