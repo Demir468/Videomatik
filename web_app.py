@@ -80,7 +80,8 @@ class VideomatikWebHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Private-Network")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def do_OPTIONS(self) -> None:
         self.send_response(204)
@@ -100,6 +101,10 @@ class VideomatikWebHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         route = parsed.path
         query = parse_qs(parsed.query)
+
+        if route == "/api/health":
+            self._send_json(200, {"status": "ok", "engine": "yt-dlp"})
+            return
 
         if route == "/api/analyze":
             url = (query.get("url") or [""])[0].strip()

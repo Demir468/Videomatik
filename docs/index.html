@@ -235,6 +235,7 @@
       color: var(--accent);
       margin-bottom: 10px;
       min-height: 20px;
+      line-height: 1.45;
       word-break: break-word;
     }
 
@@ -274,6 +275,7 @@
       font-size: 0.8rem;
       color: var(--muted);
       margin-top: 8px;
+      line-height: 1.5;
     }
     .footer a {
       color: var(--accent);
@@ -306,7 +308,7 @@
           type="url"
           id="urlInput"
           class="input"
-          placeholder="Video bağlantısını yapıştırın (TikTok, Reddit, X, YouTube, MP4...)"
+          placeholder="Video bağlantısını yapıştırın (YouTube, TikTok, Reddit, X, MP4...)"
           autocomplete="off"
         />
         <button class="btn btn-secondary" id="pasteBtn" type="button">Yapıştır</button>
@@ -322,7 +324,7 @@
           Henüz bir video analiz edilmedi. Bağlantıyı yapıştırıp "Analiz Et" veya "İndir" butonuna dokunun.
         </div>
         <div class="preview-meta" id="videoMeta">Kaynak: - | Süre: -</div>
-        <div class="preview-meta" id="videoMode">Mod: Akıllı Web Çözücü</div>
+        <div class="preview-meta" id="videoMode">Sunucu kontrol ediliyor...</div>
       </div>
     </div>
 
@@ -352,14 +354,14 @@
       <span class="settings-toggle" id="toggleSettings">⚙️ Gelişmiş Sunucu (yt-dlp Backend) Ayarları</span>
       <div class="api-settings" id="apiSettingsBox">
         <label class="field-label" for="apiBaseInput">
-          Özel yt-dlp Sunucu Adresi (Boş bırakılırsa yerleşik tarayıcı çözücüsü kullanılır):
+          Özel yt-dlp Sunucu Adresi (Bilgisayarınızda Web_Sitesi_Baslat.bat açıksa otomatik bağlanır):
         </label>
         <input
           type="url"
           id="apiBaseInput"
           class="input"
           style="width: 100%;"
-          placeholder="Örn: http://192.168.1.10:8000 veya https://videomatik.onrender.com"
+          placeholder="Örn: http://127.0.0.1:8000 veya http://192.168.1.21:8000"
         />
       </div>
     </div>
@@ -398,13 +400,39 @@
     const apiSettingsBox = document.getElementById("apiSettingsBox");
     const apiBaseInput = document.getElementById("apiBaseInput");
 
-    // Eğer sayfa kendi Python FastAPI sunucumuzdan (web_app.py) açıldıysa otomatik algıla
-    const isSelfHostedBackend = window.location.protocol.startsWith("http") && !window.location.hostname.endsWith("github.io");
-    const savedApi = localStorage.getItem("videomatik_api_base") || (isSelfHostedBackend ? window.location.origin : "");
-    apiBaseInput.value = savedApi;
+    const isSelfHostedBackend =
+      window.location.protocol.startsWith("http") && !window.location.hostname.endsWith("github.io");
+    let detectedBackend =
+      localStorage.getItem("videomatik_api_base") || (isSelfHostedBackend ? window.location.origin : "");
+    apiBaseInput.value = detectedBackend;
+
+    // Bilgisayarda çalışan yerel yt-dlp sunucusunu (127.0.0.1:8000) otomatik algıla
+    async function autoDetectLocalServer() {
+      if (detectedBackend) {
+        videoMode.textContent = `Mod: yt-dlp Sunucusu (${detectedBackend})`;
+        return;
+      }
+      try {
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 1500);
+        const res = await fetch("http://127.0.0.1:8000/api/health", { signal: ctrl.signal });
+        if (res.ok) {
+          detectedBackend = "http://127.0.0.1:8000";
+          apiBaseInput.value = detectedBackend;
+          videoMode.textContent = "Mod: Yerel yt-dlp Sunucusu Bağlandı (1000+ Site Aktif)";
+          return;
+        }
+      } catch {}
+      videoMode.textContent = "Mod: Tarayıcı İçi Çözücü (GitHub Pages)";
+    }
+    autoDetectLocalServer();
 
     apiBaseInput.addEventListener("change", () => {
-      localStorage.setItem("videomatik_api_base", apiBaseInput.value.trim().replace(/\/+$/, ""));
+      detectedBackend = apiBaseInput.value.trim().replace(/\/+$/, "");
+      localStorage.setItem("videomatik_api_base", detectedBackend);
+      videoMode.textContent = detectedBackend
+        ? `Mod: yt-dlp Sunucusu (${detectedBackend})`
+        : "Mod: Tarayıcı İçi Çözücü (GitHub Pages)";
     });
 
     toggleSettings.addEventListener("click", () => {
@@ -438,7 +466,7 @@
       directLinksBox.style.display = "flex";
       items.forEach((item) => {
         const a = document.createElement("a");
-        a.className = "btn btn-success";
+        a.className = item.className || "btn btn-success";
         a.href = item.url;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
@@ -482,7 +510,9 @@
         return {
           title: post.title || "Reddit Videosu",
           uploader: `r/${post.subreddit || "reddit"}`,
-          duration: post.secure_media?.reddit_video?.duration ? `${post.secure_media.reddit_video.duration} sn` : "-",
+          duration: post.secure_media?.reddit_video?.duration
+            ? `${post.secure_media.reddit_video.duration} sn`
+            : "-",
           thumbnail: post.thumbnail && post.thumbnail.startsWith("http") ? post.thumbnail : null,
           links: [{ label: "⬇️ Reddit MP4 Video İndir", url: fallbackUrl }],
         };
@@ -490,8 +520,8 @@
       throw new Error("Bu Reddit bağlantısında doğrudan video bulunamadı.");
     }
 
-    // 3) Genel Web Sayfası / Doğrudan MP4 Çözücü (CORS Proxy ile <video> ve og:video arama)
-    async function resolveGenericWebpage(url) {
+    // 3) NoEmbed + Doğrudan Medya Çözücü (YouTube, Vimeo, X, SoundCloud vb. Önizleme)
+    async function resolveOEmbedOrDirect(url) {
       if (/\.(mp4|webm|m4a|mp3|mov)(\?.*)?$/i.test(url)) {
         const fileName = url.split("/").pop().split("?")[0] || "video.mp4";
         return {
@@ -500,57 +530,26 @@
           duration: "Doğrudan Medya",
           thumbnail: null,
           links: [{ label: `⬇️ Doğrudan İndir (${fileName})`, url, download: fileName }],
+          needsBackendForStream: false,
         };
       }
 
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
-      const data = await res.json();
-      const html = data?.contents || "";
-      if (!html) throw new Error("Sayfa içeriği okunamadı.");
-
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      const title =
-        doc.querySelector('meta[property="og:title"]')?.content ||
-        doc.querySelector("title")?.textContent ||
-        "Web Videosu";
-      const thumb = doc.querySelector('meta[property="og:image"]')?.content || null;
-
-      const foundUrls = new Set();
-      const ogVideo =
-        doc.querySelector('meta[property="og:video:secure_url"]')?.content ||
-        doc.querySelector('meta[property="og:video"]')?.content ||
-        doc.querySelector('meta[name="twitter:player:stream"]')?.content;
-      if (ogVideo) foundUrls.add(ogVideo);
-
-      doc.querySelectorAll("video, video source, a[href]").forEach((el) => {
-        const src = el.getAttribute("src") || el.getAttribute("href");
-        if (src && /\.(mp4|webm|m4a|mp3)(\?.*)?$/i.test(src)) {
-          try {
-            foundUrls.add(new URL(src, url).href);
-          } catch {}
-        }
-      });
-
-      const regexMatches = html.match(/https?:\/\/[^"'\\\s<>]+\.(?:mp4|webm|m4a)(?:\?[^"'\\\s<>]*)?/gi) || [];
-      regexMatches.forEach((m) => foundUrls.add(m.replace(/\\u0026/g, "&").replace(/\\/g, "")));
-
-      if (foundUrls.size === 0) {
-        throw new Error("Bu sayfada doğrudan açık MP4 akışı bulunamadı. Tam yt-dlp desteği için gelişmiş sunucu modunu kullanın.");
+      const oembedRes = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+      const oembed = await oembedRes.json();
+      if (oembed && !oembed.error && oembed.title) {
+        return {
+          title: oembed.title,
+          uploader: oembed.author_name || oembed.provider_name || new URL(url).hostname,
+          duration: oembed.provider_name || "Video",
+          thumbnail: oembed.thumbnail_url || null,
+          links: [],
+          needsBackendForStream: true,
+        };
       }
 
-      const links = Array.from(foundUrls).slice(0, 5).map((u, idx) => ({
-        label: `⬇️ Video Akışı #${idx + 1} İndir / Aç`,
-        url: u,
-      }));
-
-      return {
-        title: title.trim(),
-        uploader: new URL(url).hostname,
-        duration: "-",
-        thumbnail: thumb,
-        links,
-      };
+      throw new Error(
+        "Bu siteyi doğrudan tarayıcıda çözmek için yt-dlp Python sunucusu gereklidir. Bilgisayarınızda 'Web_Sitesi_Baslat.bat' dosyasını çalıştırın veya Masaüstü (.exe) uygulamasını kullanın."
+      );
     }
 
     async function processVideo(isDownloadAction) {
@@ -565,10 +564,11 @@
       downloadBtn.disabled = true;
       statusText.textContent = "⏳ Video analiz ediliyor, lütfen bekleyin...";
 
+      await autoDetectLocalServer();
       const backendBase = getBackendBase();
 
       try {
-        // A) Eğer Python yt-dlp Backend Sunucusu tanımlıysa onu kullan
+        // A) Eğer Python yt-dlp Backend Sunucusu aktifse 1000+ siteyi doğrudan indir
         if (backendBase) {
           const infoRes = await fetch(`${backendBase}/api/analyze?url=${encodeURIComponent(url)}`);
           const infoData = await infoRes.json();
@@ -579,7 +579,7 @@
             uploader: infoData.uploader,
             duration: infoData.duration_str,
             thumbnail: infoData.thumbnail,
-            mode: "yt-dlp Python Sunucusu (1000+ Site)",
+            mode: `yt-dlp Sunucusu (${backendBase})`,
           });
 
           const dlUrl = `${backendBase}/api/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(formatSelect.value)}&quality=${encodeURIComponent(qualitySelect.value)}`;
@@ -604,7 +604,7 @@
         } else if (lower.includes("reddit.com") || lower.includes("redd.it")) {
           result = await resolveReddit(url);
         } else {
-          result = await resolveGenericWebpage(url);
+          result = await resolveOEmbedOrDirect(url);
         }
 
         setPreview({
@@ -612,10 +612,28 @@
           uploader: result.uploader,
           duration: result.duration,
           thumbnail: result.thumbnail,
-          mode: "Tarayıcı İçi Doğrudan Çözücü (GitHub Pages)",
+          mode: "Tarayıcı İçi Çözücü (GitHub Pages)",
         });
-        showDirectButtons(result.links);
-        statusText.textContent = "✅ Video bağlantıları bulundu! İndirmek için aşağıdaki yeşil butona dokunun.";
+
+        if (result.needsBackendForStream) {
+          showDirectButtons([
+            {
+              label: "💻 Windows Masaüstü Uygulamasını (.exe) İndir",
+              url: "https://github.com/Demir468/Videomatik/releases/latest",
+              className: "btn btn-primary",
+            },
+            {
+              label: "☁️ Ücretsiz Bulut Sunucusu Kur (Render.com)",
+              url: "https://render.com/deploy?repo=https://github.com/Demir468/Videomatik",
+              className: "btn btn-secondary",
+            },
+          ]);
+          statusText.textContent =
+            "ℹ️ Video bilgileri alındı! YouTube/X videolarını MP4/MP3 olarak birleştirmek için arka planda yt-dlp sunucusu gerekir: Bilgisayarınızda 'Web_Sitesi_Baslat.bat' dosyasını açıp sayfayı yenileyin (veya telefondan http://192.168.1.21:8000 adresine girin).";
+        } else {
+          showDirectButtons(result.links);
+          statusText.textContent = "✅ Video bağlantıları bulundu! İndirmek için aşağıdaki yeşil butona dokunun.";
+        }
       } catch (err) {
         statusText.textContent = `❌ ${err.message}`;
       } finally {
